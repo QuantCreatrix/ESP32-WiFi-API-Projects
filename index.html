@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RGB Range Slider</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            transition: background-color 0.5s;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        body{
+        margin: 0px;
+        padding: 0px;
+    }
+
+        .container{
+            width: 350px;
+            height: 500px;
+            background-image: linear-gradient(#ff9966,#ff5e62);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%,-50%);
+            border-radius: 10px;
+            box-shadow: 5px 5px 10px black;
+        }
+
+        .slider-container {
+            margin: 20px;
+        }
+        .slider {
+            width: 300px;
+        }
+
+        .slider-container label{
+            font-size: 20px;
+        }
+
+        #redRange{
+            background-color: red;
+        }
+
+        #round{
+            width: 20px;
+            height: 20px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transform: translate(20%,20%);
+            border-radius: 30px;
+            background-color: white;
+            border: 2px solid rgb(84, 84, 84);
+        }
+
+        .box{
+            width: 70px;
+            height: 25px;
+            border-radius: 10px;
+            background: white;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <center><h1><img src="WebFiles/heading.png" alt="" style="scale: 0.9; margin-top: 30px;"></h1></center>
+    <center>
+    <div id="round"></div>
+    <div class="slider-container">
+        <label for="redRange">Red: <span id="redValue">125</span></label>
+        <input type="range" id="redRange" class="slider" min="0" max="255" value="125">
+    </div>
+    <div class="slider-container">
+        <label for="greenRange">Green: <span id="greenValue">100</span></label>
+        <input type="range" id="greenRange" class="slider" min="0" max="255" value="125">
+    </div>
+    <div class="slider-container">
+        <label for="blueRange">Blue: <span id="blueValue">80</span></label>
+        <input type="range" id="blueRange" class="slider" min="0" max="255" value="125">
+    </div>
+    <div class="box"></div>
+    <div id="author" style="position: absolute; bottom: 0; transform: translate(10%,-100%);">Anubhav Rathore</div>
+</div>
+
+<script>
+    const redRange = document.getElementById('redRange');
+        const greenRange = document.getElementById('greenRange');
+        const blueRange = document.getElementById('blueRange');
+
+        const redValue = document.getElementById('redValue');
+        const greenValue = document.getElementById('greenValue');
+        const blueValue = document.getElementById('blueValue');
+        const finalValues = document.getElementById('finalValues');
+
+        function updateValues() {
+            const r = redRange.value;
+            const g = greenRange.value;
+            const b = blueRange.value;
+            redValue.textContent = r;
+            greenValue.textContent = g;
+            blueValue.textContent = b;
+        }
+
+        redRange.addEventListener('input', updateValues);
+        greenRange.addEventListener('input', updateValues);
+        blueRange.addEventListener('input', updateValues);
+
+        // Initialize the values on page load
+        updateValues();
+
+        function sendColorValues(r, g, b) {
+            fetch('https://remotergb-y3sj.onrender.com/rgb', {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                r: r,
+                g: g,
+                b: b
+            }),
+            }).then(response => response.json())
+            .then(data => console.log(data))
+    }
+
+function updateColor(r,g,b){
+    document.querySelector('.box').style.background = `rgb(${r},${g},${b})`;
+}
+
+const events = ['mouseup', 'touchend'];
+events.forEach(e => {
+    redRange.addEventListener(e, function(){sendColorValues(redRange.value, greenRange.value, blueRange.value); updateColor(redRange.value, greenRange.value, blueRange.value)});
+    greenRange.addEventListener(e,function(){sendColorValues(redRange.value, greenRange.value, blueRange.value); updateColor(redRange.value, greenRange.value, blueRange.value)});
+    blueRange.addEventListener(e, function(){sendColorValues(redRange.value, greenRange.value, blueRange.value); updateColor(redRange.value, greenRange.value, blueRange.value)});
+})
+// redRange.addEventListener('mouseup', function(){sendColorValues(redRange.value, greenRange.value, blueRange.value); updateColor(redRange.value, greenRange.value, blueRange.value)});
+// greenRange.addEventListener('mouseup',function(){sendColorValues(redRange.value, greenRange.value, blueRange.value); updateColor(redRange.value, greenRange.value, blueRange.value)});
+// blueRange.addEventListener('mouseup', function(){sendColorValues(redRange.value, greenRange.value, blueRange.value); updateColor(redRange.value, greenRange.value, blueRange.value)});
+
+</script>
+</body>
+</html>
