@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather</title>
+</head>
+<style>
+    body {
+        margin: 0px;
+        padding: 0px;
+        font-family: 'Courier New', Courier, monospace;
+        /* background-image: linear-gradient(red,blue); */
+        color: white;
+    }
+
+    .container {
+        width: 350px;
+        height: 500px;
+        background-image: url(starfall-gif-46.gif);
+        background-size: cover;
+        /* background-position: right; */
+        background-repeat: no-repeat;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        border-radius: 20px;
+    }
+
+    #heading {
+        width: 300px;
+        margin-top: 30px;
+        opacity: 0;
+        animation: floatIn 1s forwards;
+    }
+
+    td {
+        /* background-color: cyan; */
+        padding: 5px;
+        height: 150px;
+        border: none;
+        text-align: center;
+        /* From https://css.glass */
+        background: rgba(255, 255, 255, 0.32);
+        border-radius: 16px;
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(3.4px);
+        -webkit-backdrop-filter: blur(3.4px);
+        border: 1px solid rgba(255, 255, 255, 0.38);
+        opacity: 0;
+        animation: floatIn 1s forwards 1s;
+    }
+
+    @keyframes floatIn {
+        from {
+            transform: translateY(50px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .shutDown {
+        animation: toggleOpacity 1s infinite;
+    }
+
+    @keyframes toggleOpacity {
+        0% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.5;
+        }
+        100% {
+            opacity: 1;
+        }
+    }
+
+    .loading {
+        text-align: center;
+        margin-top: 50%;
+        font-size: 20px;
+    }
+</style>
+<body>
+    <div class="container">
+        <div class="loading">Loading...</div>
+        <div id="weather-content" style="display:none;">
+            <center><img src="heading.png" alt="" id="heading"></center>
+            <hr style="width: 90%;">
+            <div class="textContainer">
+                <center><pre style="font-size: 15px; color: white;">Sensor Location:
+Bhilai, Chhattisgarh</pre></center>
+                <table cellspacing="40px">
+                    <tr>
+                        <td>Temperature: 
+                            <br>
+                            <p id="temp"></p>
+                        </td>
+                        <td>Humidity: 
+                            <br>
+                            <p id="humid"></p>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <div id="shutdown" class="shutDown" style="display:none;">SYSTEM IS SHUTDOWN</div>
+    </div>
+<script>
+    var active = 0;
+var patchTime = 0;
+var statusTime = 0;
+var temp = document.getElementById("temp");
+var humid = document.getElementById("humid");
+var container = document.querySelector(".container");
+var loading = document.querySelector(".loading");
+var weatherContent = document.getElementById("weather-content");
+var shutdownMessage = document.getElementById("shutdown");
+
+window.onload = function() {
+    checkActive();
+};
+
+async function checkActive() {
+    try {
+        // Step 1: Patch request to check if active
+        const patchResponse = await fetch("https://weather-server-ghi8.onrender.com/statusG", {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                statusCheck: "areyouactive?"
+            })
+        });
+        const patchData = await patchResponse.json();
+        patchTime = patchData["time"];
+        console.log("patchTime:", patchTime);
+        
+        // Step 2: Get statusTime
+        const statusResponse = await fetch("https://weather-server-ghi8.onrender.com/statusR");
+        const statusData = await statusResponse.json();
+        statusTime = statusData[0]["time"];
+        console.log("statusTime:", statusTime);
+
+        // Step 3: Check if the device is active
+        if (Math.abs(statusTime - patchTime) < 60000) {
+            active = 1;
+        } else {
+            active = 0;
+        }
+
+        // Step 4: Execute or show shutdown message
+        if (active == 1) {
+            loading.style.display = "none";
+            shutdownMessage.style.display = "none";
+            weatherContent.style.display = "block";
+            execute();
+        } else {
+            loading.style.display = "none";
+            weatherContent.style.display = "none";
+            shutdownMessage.style.display = "block";
+        }
+    } catch (error) {
+        console.error('Fetch error:', error);
+    }
+}
+
+async function execute() {
+    try {
+        const response = await fetch("https://weather-server-ghi8.onrender.com/weather");
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        console.log(data[0]);
+        temp.innerText = data[0]["temp"] + " ℃";
+        humid.innerText = data[0]["humidity"] + " %";
+        active = 0;
+    } catch (error) {
+        console.error('Fetch error:', error);
+    }
+}
+
+// Repeat execute and checkActive functions at their respective intervals
+setInterval(execute, 30000);
+setInterval(checkActive, 110000);
+</script>
+</body>
+
+</html>
